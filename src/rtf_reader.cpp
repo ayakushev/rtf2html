@@ -13,8 +13,7 @@
 
 namespace SDK_RTF2HTML {
 
-    unsigned hexToInt(char character)
-    {
+    unsigned hexToInt(char character)    {
         if ((character >= '0') && (character <= '9'))
             return character - '0';
         else if ((character >= 'a') && (character <= 'z'))
@@ -26,118 +25,112 @@ namespace SDK_RTF2HTML {
 
 
     RtfReader::RtfReader(std::istream& newStream, IWriter& newWriter) :
-        style(), isDestinationGroupIgnorable(false)
-    {
+        style(), isDestinationGroupIgnorable(false)    {
         writer = &newWriter;
         stream = &newStream;
         tableStarted = false;
         initCommands();
     }
 
-    RtfReader::~RtfReader()
-    {
+    RtfReader::~RtfReader()    {
     }
 
     void RtfReader::initCommands() {
-        m_commands["fldrslt"] = [this](IWriter & writer, RtfStyle & style, int value) {}; //FieldrsltHandler())));
-        m_commands["fldinst"] = [this](IWriter & writer, RtfStyle & style, int value) { // FieldinstHandler
+        m_commands["fldrslt"] = [this](IWriter & writer, RtfStyle & style, int value) {}; 
+        m_commands["fldinst"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandFieldinst();
         };
-        m_commands["par"] = [this](IWriter & writer, RtfStyle & style, int value) { //ParHandler
+        m_commands["par"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandLineBreak();
         };
-        m_commands["*"] = [this](IWriter & writer, RtfStyle & style, int value) { //IgnoreDestinationHandler())));
-            //.If an unknown control word is preceded by '{\*', 
-            //then it starts an ignorable destination group.
-            //The RTF reader should discard all text up to and including the closing brace(
-            //}) that closes this group.
+        m_commands["*"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandSetDestinationGroupIgnorable();
         };
-        m_commands["fonttbl"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["fonttbl"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["pict"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["pict"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["stylesheet"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["stylesheet"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["info"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["info"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["xe"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["xe"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["header"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["header"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["footer"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["footer"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["tc"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["tc"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["tcn"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["tcn"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["nonshppict"] = [this](IWriter & writer, RtfStyle & style, int value) { //DestinationHandler())));
+        m_commands["nonshppict"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["colortbl"] = [this](IWriter & writer, RtfStyle & style, int value) { //ColorTblHandler())));
+        m_commands["colortbl"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandColourTable();
         };
-        m_commands["field"] = [this](IWriter & writer, RtfStyle & style, int value) {}; //FieldHandler)));
-        m_commands["tab"] = [this](IWriter & writer, RtfStyle & style, int value) { //TabHandler)));
+        m_commands["field"] = [this](IWriter & writer, RtfStyle & style, int value) {}; 
+        m_commands["tab"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandTab();
         };
-        m_commands["sbknone"] = [this](IWriter & writer, RtfStyle & style, int value) { //SbknoneHandler())));
+        m_commands["sbknone"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             if (this->getRtfStyle().getSectionColumns())
                 this->commandEndRow();
             else
                 this->commandLineBreak();
         };
-        m_commands["cols"] = [this](IWriter & writer, RtfStyle & style, int value) { //ColsHandler())));
+        m_commands["cols"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             RtfStyle rtfStyle = this->getRtfStyle();
             rtfStyle.setSectionColumns(value);
             this->setRtfStyle(rtfStyle);
         };
-        m_commands["sbkcol"] = [this](IWriter & writer, RtfStyle & style, int value) { //CellHandler())));
+        m_commands["sbkcol"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandEndCell();
         };
-        m_commands["\\"] = [this](IWriter & writer, RtfStyle & style, int value) { //BackslashHandler())));
+        m_commands["\\"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandCharacter('\\');
         };
-        m_commands["{"] = [this](IWriter & writer, RtfStyle & style, int value) { //OpeningBraceHandler())));
+        m_commands["{"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter('{');
         };
-        m_commands["}"] = [this](IWriter & writer, RtfStyle & style, int value) { //ClosingBraceHandler())));
+        m_commands["}"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter('}');
         };
-        m_commands[";"] = [this](IWriter & writer, RtfStyle & style, int value) {  //SemiColonHandler())));
+        m_commands[";"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandCharacter(';');
         };
-        m_commands["lquote"] = [this](IWriter & writer, RtfStyle & style, int value) { //LQuoteHandler())));
+        m_commands["lquote"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandCharacter((unsigned long)0x91);
         };
-        m_commands["rquote"] = [this](IWriter & writer, RtfStyle & style, int value) { //RQuoteHandler())));
+        m_commands["rquote"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandCharacter((unsigned long)0x92);
         };
-        m_commands["ldblquote"] = [this](IWriter & writer, RtfStyle & style, int value) { //LDblQuoteHandler())));
+        m_commands["ldblquote"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandCharacter((unsigned long)0x93);
         };
-        m_commands["rdblquote"] = [this](IWriter & writer, RtfStyle & style, int value) { //RDblQuoteHandler())));
+        m_commands["rdblquote"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter((unsigned long)0x94);
         };
-        m_commands["bullet"] = [this](IWriter & writer, RtfStyle & style, int value) { //BulletHandler())));
+        m_commands["bullet"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandCharacter((unsigned long)0x95);
         };
-        m_commands["endash"] = [this](IWriter & writer, RtfStyle & style, int value) { //EnDashHandler())));
+        m_commands["endash"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandCharacter((unsigned long)0x96);
         };
-        m_commands["emdash"] = [this](IWriter & writer, RtfStyle & style, int value) { //EmDashHandler())));
+        m_commands["emdash"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandCharacter((unsigned long)0x97);
         };
-        m_commands["b"] = [this](IWriter & writer, RtfStyle & style, int value) { //BoldHandler())));
+        m_commands["b"] = [this](IWriter & writer, RtfStyle & style, int value) {
             Style new_style = this->getStyle();
             if (value)
                 new_style.setBold(true);
@@ -145,7 +138,7 @@ namespace SDK_RTF2HTML {
                 new_style.setBold(false);
             this->setStyle(new_style);
         };
-        m_commands["i"] = [this](IWriter & writer, RtfStyle & style, int value) { //ItalicHandler())));
+        m_commands["i"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             Style _style = this->getStyle();
             if (value)
                 _style.setItalic(true);
@@ -153,10 +146,10 @@ namespace SDK_RTF2HTML {
                 _style.setItalic(false);
             this->setStyle(_style);
         };
-        m_commands["u"] = [this](IWriter & writer, RtfStyle & style, int value) { //UnicodeHandler())));
+        m_commands["u"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandUnicode(value);
         };
-        m_commands["ul"] = [this](IWriter & writer, RtfStyle & _style, int value) { //UnderlineHandler())));
+        m_commands["ul"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
             Style style = this->getStyle();
             if (value)
                 style.setUnderline(true);
@@ -164,17 +157,17 @@ namespace SDK_RTF2HTML {
                 style.setUnderline(false);
             this->setStyle(style);
         };
-        m_commands["ulnone"] = [this](IWriter & writer, RtfStyle & _style, int value) { //NoUnderlineHandler())));
+        m_commands["ulnone"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
             Style style = this->getStyle();
             style.setUnderline(false);
             this->setStyle(style);
         };
-        m_commands["plain"] = [this](IWriter & writer, RtfStyle & _style, int value) { //PlainHandler())));
+        m_commands["plain"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
             RtfStyle style = this->getRtfStyle();
             style.setPlain();
             this->setRtfStyle(style);
         };
-        m_commands["ql"] = [this](IWriter & writer, RtfStyle & _style, int value) { //LeftJustifyHandler())));
+        m_commands["ql"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
             Style style = this->getStyle();
             if (value)
             {
@@ -186,7 +179,7 @@ namespace SDK_RTF2HTML {
             }
             this->setStyle(style);
         };
-        m_commands["qr"] = [this](IWriter & writer, RtfStyle & _style, int value) {//RightJustifyHandler())));
+        m_commands["qr"] = [this](IWriter & writer, RtfStyle & _style, int value) {
             Style style = this->getStyle();
             if (value)
                 style.setAlign(RightJustified);
@@ -194,7 +187,7 @@ namespace SDK_RTF2HTML {
                 style.setAlign(DefaultJustified);
             this->setStyle(style);
         };
-        m_commands["qc"] = [this](IWriter & writer, RtfStyle & _style, int value) { //CentreJustifyHandler())));
+        m_commands["qc"] = [this](IWriter & writer, RtfStyle & _style, int value) {
             Style style = this->getStyle();
             if (value)
                 style.setAlign(CentreJustified);
@@ -202,29 +195,28 @@ namespace SDK_RTF2HTML {
                 style.setAlign(DefaultJustified);
             this->setStyle(style);
         };
-        m_commands["intbl"] = [this](IWriter & writer, RtfStyle & style, int value) { //IntblHandler())));
+        m_commands["intbl"] = [this](IWriter & writer, RtfStyle & style, int value) {
             RtfStyle rtfStyle = this->getRtfStyle();
             rtfStyle.setInTable(value);
             this->setRtfStyle(rtfStyle);
         };
-        m_commands["row"] = [this](IWriter & writer, RtfStyle & style, int value) { //RowHandler())));
+        m_commands["row"] = [this](IWriter & writer, RtfStyle & style, int value) { 
             this->commandEndRow();
         };
-        m_commands["cell"] = [this](IWriter & writer, RtfStyle & style, int value) { //CellHandler())));
+        m_commands["cell"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandEndCell();
         };
-        m_commands["pard"] = [this](IWriter & writer, RtfStyle & style, int value) { //PardHandler())));
+        m_commands["pard"] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandParagraphDefault();
         };
-        m_commands["cf"] = [this](IWriter & writer, RtfStyle & _style, int value) { //CfHandler())));
+        m_commands["cf"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
             RtfStyle style = this->getRtfStyle();
             style.setForegroundColour(value);
             this->setRtfStyle(style);
         };
     }
 
-    bool RtfReader::processData(void)
-    {
+    bool RtfReader::processData(void)    {
         char character;
         stream->get(character);
 
@@ -272,13 +264,11 @@ namespace SDK_RTF2HTML {
             return false;
     }
 
-    int RtfReader::getPercentComplete(void)
-    {
+    int RtfReader::getPercentComplete(void)    {
         return 0;
     }
 
-    void RtfReader::readCommand(char inputCharacter)
-    {
+    void RtfReader::readCommand(char inputCharacter)    {
         std::string inputString;
         const std::string escapedCharacters = "\\{}";
         char character;
@@ -380,8 +370,7 @@ namespace SDK_RTF2HTML {
         }
     }
 
-    void RtfReader::handleCommand(std::string& inputString)
-    {
+    void RtfReader::handleCommand(std::string& inputString)    {
         using namespace std;
 
         if (inputString[1] == '\'')
@@ -417,23 +406,7 @@ namespace SDK_RTF2HTML {
             string valueString(inputString, digitIndex);
             value = atoi(valueString.c_str());
         }
-#if 0
-        RtfCommands::iterator found = elements.find(commandString);
-        if (found != elements.end())
-        {
-            isDestinationGroupIgnorable = false;
-            found->second->handleCommand(this, value);
-        }
-        else if (isDestinationGroupIgnorable) {
-            //Ignore current and nested groups
-            commandIgnoreDestinationKeyword();
-            isDestinationGroupIgnorable = false;
-        }
-        else
-        {
-            ; // log[LOG_INFO] << DEBUG_ID << "Command " << commandString << " not found\n";
-        }
-#else
+
         std::map< std::string, WriterFunctor>::iterator found = m_commands.find(commandString);
         if (found != m_commands.end())
         {
@@ -449,12 +422,10 @@ namespace SDK_RTF2HTML {
         {
             ; // log[LOG_INFO] << DEBUG_ID << "Command " << commandString << " not found\n";
         }
-#endif
 
     }
 
-    bool RtfReader::readFirstSymbolSequence(std::string & symbolsSeq)
-    {
+    bool RtfReader::readFirstSymbolSequence(std::string & symbolsSeq)    {
         char character = '\0';
         symbolsSeq = "";
 
@@ -472,8 +443,7 @@ namespace SDK_RTF2HTML {
         return true;
     }
 
-    void RtfReader::commandIgnoreDestinationKeyword(void)
-    {
+    void RtfReader::commandIgnoreDestinationKeyword(void)    {
         int level;
         char character;
 
@@ -493,18 +463,15 @@ namespace SDK_RTF2HTML {
         stream->putback(character);
     }
 
-    void RtfReader::commandSetDestinationGroupIgnorable(void)
-    {
+    void RtfReader::commandSetDestinationGroupIgnorable(void)    {
         isDestinationGroupIgnorable = true;
     }
 
-    void RtfReader::commandParagraphBreak(void)
-    {
+    void RtfReader::commandParagraphBreak(void)    {
         writer->writeBreak(ParagraphBreak);
     }
 
-    void RtfReader::commandLineBreak(void)
-    {
+    void RtfReader::commandLineBreak(void)    {
         writer->writeBreak(LineBreak);
     }
 
@@ -512,14 +479,12 @@ namespace SDK_RTF2HTML {
         writer->writeChar(character);
     }
 
-    void RtfReader::commandField(void)
-    {
+    void RtfReader::commandField(void)    {
         //<field>	'{' \field <fieldmod> ? <fieldinst> <fieldrslt> '}'
         //<fieldinst>	'{\*' \fldinst <fieldtype><para>+ \fldalt? <datafield>? <formfield>? '}'
     }
 
-    void RtfReader::commandFieldinst(void)
-    {
+    void RtfReader::commandFieldinst(void)    {
         //<fieldinst>	'{\*' \fldinst <fieldtype><para>+\fldalt ? <datafield> ? <formfield> ? '}'
         char character = '\0';
         std::string fieldtype = "";
@@ -558,8 +523,7 @@ namespace SDK_RTF2HTML {
         }
     }
 
-    void RtfReader::commandParagraphDefault(void)
-    {
+    void RtfReader::commandParagraphDefault(void)    {
         style.setInTable(false);
         Style standardStyle = style.getStyle();
         standardStyle.setAlign(DefaultJustified);
@@ -567,13 +531,11 @@ namespace SDK_RTF2HTML {
         writer->setStyle(standardStyle);
     }
 
-    void RtfReader::commandTab(void)
-    {
+    void RtfReader::commandTab(void)    {
         writer->writeTab();
     }
 
-    void RtfReader::commandUnicode(int value)
-    {
+    void RtfReader::commandUnicode(int value)    {
         //(Word specification 2009)
         //This keyword is followed immediately by equivalent character(s) in ANSI representation.
         char character = '\0';
@@ -600,14 +562,12 @@ namespace SDK_RTF2HTML {
         //ignore ascii, because unicode is supported
     }
 
-    void RtfReader::commandInTable(void)
-    {
+    void RtfReader::commandInTable(void)    {
         // Note: RTF does not allow nested tables
         style.setInTable(true);
     }
 
-    void RtfReader::flushTable(void)
-    {
+    void RtfReader::flushTable(void)    {
         if (style.getInTable() || style.getSectionColumns())
         {
             if (!tableStarted)
@@ -642,16 +602,14 @@ namespace SDK_RTF2HTML {
         }
     }
 
-    void RtfReader::commandEndCell(void)
-    {
+    void RtfReader::commandEndCell(void)    {
         if (cellStarted)
             writer->writeTable(TableCellEnd);
 
         cellStarted = false;
     }
 
-    void RtfReader::commandEndRow(void)
-    {
+    void RtfReader::commandEndRow(void)    {
         commandEndCell();
 
         if (rowStarted)
@@ -660,22 +618,16 @@ namespace SDK_RTF2HTML {
         rowStarted = false;
     }
 
-    Style RtfReader::getStyle(void) const
-    {
+    Style RtfReader::getStyle(void) const    {
         return style.getStyle();
     }
 
-    void RtfReader::setStyle(const Style &value)
-    {
-#ifdef ENABLE_DEBUG_LOG
-        log[LOG_DEBUG] << DEBUG_ID << "Setting style\n";
-#endif    
+    void RtfReader::setStyle(const Style &value)    {
         style.setStyle(value);
         writer->setStyle(value);
     }
 
-    void RtfReader::commandColourTable(void)
-    {
+    void RtfReader::commandColourTable(void)    {
         int brackets = 1;
         char character;
         std::string inputString;
@@ -757,13 +709,11 @@ namespace SDK_RTF2HTML {
         }
     }
 
-    RtfStyle RtfReader::getRtfStyle(void) const
-    {
+    RtfStyle RtfReader::getRtfStyle(void) const     {
         return style;
     }
 
-    void RtfReader::setRtfStyle(const RtfStyle &value)
-    {
+    void RtfReader::setRtfStyle(const RtfStyle &value)    {
         style = value;
         writer->setStyle(value.getStyle());
     }

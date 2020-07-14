@@ -26,8 +26,6 @@ namespace SDK_RTF2HTML {
 
         string temp;
 
-        //temp.clear();
-
         temp = HexToChar((value >> 4) & 0x0f);
         temp += HexToChar(value & 0x0f);
 
