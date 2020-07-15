@@ -158,7 +158,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\html_writer.h" />
-    <ClInclude Include="src\interfaces.h" />
     <ClInclude Include="src\rtf_reader.h" />
     <ClInclude Include="src\utils.h" />
   </ItemGroup>

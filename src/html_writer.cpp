@@ -3,10 +3,9 @@
 #include <ostream>
 #include <ctype.h>
 
-#include "interfaces.h"
 #include "html_writer.h"
 
-namespace SDK_RTF2HTML {
+namespace RTF2HTML {
 
     bool isASCII(unsigned int ch) {
         return ch < 0x80;

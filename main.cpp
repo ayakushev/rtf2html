@@ -4,7 +4,7 @@
 #include "rtf_reader.h"
 #include "html_writer.h"
 
-using namespace SDK_RTF2HTML;
+using namespace RTF2HTML;
 
 int main(int argc, char **argv){
     if (argc != 3)
@@ -23,6 +23,7 @@ int main(int argc, char **argv){
     }
     std::istringstream in(sdata);
     std::ostringstream out;
+
 
     HtmlWriter htmlWriter(out);
     IWriter* writer = &htmlWriter;

@@ -1,9 +1,20 @@
 #ifndef __HTML_WRITER_H__
 #define __HTML_WRITER_H__
 
-#include "interfaces.h"
+#include "utils.h"
 
-namespace SDK_RTF2HTML {
+namespace RTF2HTML {
+
+class IWriter {
+public:
+    virtual void writeTab() = 0;
+    virtual void writeChar(unsigned int character) = 0;
+    virtual void writeBreak(BreakType type) = 0;
+    virtual void writeTable(TableType table) = 0;
+    virtual void setStyle(const Style &newStyle) = 0;
+
+    virtual ~IWriter() { };
+};
 
 class HtmlWriter : public IWriter {
 private:

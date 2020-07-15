@@ -7,11 +7,12 @@
 #include <ctype.h>
 #include <cctype>
 #include <string.h>
-#include "interfaces.h"
 #include "rtf_reader.h"
 #include "utils.h"
 
-namespace SDK_RTF2HTML {
+namespace RTF2HTML {
+
+    class IWriter;
 
     unsigned hexToInt(char character)    {
         if ((character >= '0') && (character <= '9'))
@@ -35,102 +36,153 @@ namespace SDK_RTF2HTML {
     RtfReader::~RtfReader()    {
     }
 
+    const char *cmd_name_fldrslt = "fldrslt";
+    const char *cmd_name_fldinst = "fldinst";
+    const char *cmd_name_par = "par";
+    const char *cmd_name_asterisk = "*";
+    const char *cmd_name_fonttbl = "fonttbl";
+    const char *cmd_name_pict = "pict";
+    const char *cmd_name_stylesheet = "stylesheet";
+    const char *cmd_name_info = "info";
+    const char *cmd_name_xe = "xe";
+    const char *cmd_name_footer = "footer";
+    const char *cmd_name_header = "header";
+    const char *cmd_name_nonshppict = "nonshppict";
+    const char *cmd_name_tcn = "tcn";
+    const char *cmd_name_tc = "tc";
+    const char *cmd_name_tab = "tab";
+    const char *cmd_name_field = "field";
+    const char *cmd_name_colortbl = "colortbl";
+    const char *cmd_name_sbkcol = "sbkcol";
+    const char *cmd_name_cols = "cols";
+    const char *cmd_name_sbknone = "sbknone";
+    const char *cmd_name_slash = "\\";
+    const char *cmd_name_LeftBrace = "}";
+    const char *cmd_name_RightBrace = "{";
+    const char *cmd_name_rdblquote = "rdblquote";
+    const char *cmd_name_ldblquote = "ldblquote";
+    const char *cmd_name_rquote = "rquote";
+    const char *cmd_name_lquote = "lquote";
+    const char *cmd_name_semicolon = ";";
+    const char *cmd_name_i = "i";
+    const char *cmd_name_b = "b";
+    const char *cmd_name_emdash = "emdash";
+    const char *cmd_name_bullet = "bullet";
+    const char *cmd_name_endash = "endash";
+    const char *cmd_name_u = "u";
+    const char *cmd_name_ul = "ul";
+    const char *cmd_name_ulnone = "ulnone";
+    const char *cmd_name_plain = "plain";
+    const char *cmd_name_ql = "ql";
+    const char *cmd_name_qr = "qr";
+    const char *cmd_name_qc = "qc";
+    const char *cmd_name_intbl = "intbl";
+    const char *cmd_name_row = "row";
+    const char *cmd_name_cell = "cell";
+    const char *cmd_name_pard = "pard";
+    const char *cmd_name_cf = "cf";
+
+
+
+
+
+
     void RtfReader::initCommands() {
-        m_commands["fldrslt"] = [this](IWriter & writer, RtfStyle & style, int value) {}; 
-        m_commands["fldinst"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_fldrslt] = [this](IWriter & writer, RtfStyle & style, int value) {};
+        m_commands[cmd_name_fldinst] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandFieldinst();
         };
-        m_commands["par"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_par] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandLineBreak();
         };
-        m_commands["*"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_asterisk] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandSetDestinationGroupIgnorable();
         };
-        m_commands["fonttbl"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_fonttbl] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["pict"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_pict] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["stylesheet"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_stylesheet] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["info"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_info] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["xe"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_xe] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["header"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_header] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["footer"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_footer] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["tc"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_tc] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["tcn"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_tcn] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["nonshppict"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_nonshppict] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandIgnoreDestinationKeyword();
         };
-        m_commands["colortbl"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_colortbl] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandColourTable();
         };
-        m_commands["field"] = [this](IWriter & writer, RtfStyle & style, int value) {}; 
-        m_commands["tab"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_field] = [this](IWriter & writer, RtfStyle & style, int value) {};
+        m_commands[cmd_name_tab] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandTab();
         };
-        m_commands["sbknone"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_sbknone] = [this](IWriter & writer, RtfStyle & style, int value) {
             if (this->getRtfStyle().getSectionColumns())
                 this->commandEndRow();
             else
                 this->commandLineBreak();
         };
-        m_commands["cols"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_cols] = [this](IWriter & writer, RtfStyle & style, int value) {
             RtfStyle rtfStyle = this->getRtfStyle();
             rtfStyle.setSectionColumns(value);
             this->setRtfStyle(rtfStyle);
         };
-        m_commands["sbkcol"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_sbkcol] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandEndCell();
         };
-        m_commands["\\"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_slash] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter('\\');
         };
-        m_commands["{"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_LeftBrace] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter('{');
         };
-        m_commands["}"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_RightBrace] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter('}');
         };
-        m_commands[";"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_semicolon] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter(';');
         };
-        m_commands["lquote"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_lquote] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter((unsigned long)0x91);
         };
-        m_commands["rquote"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_rquote] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter((unsigned long)0x92);
         };
-        m_commands["ldblquote"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_ldblquote] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter((unsigned long)0x93);
         };
-        m_commands["rdblquote"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_rdblquote] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter((unsigned long)0x94);
         };
-        m_commands["bullet"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_bullet] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter((unsigned long)0x95);
         };
-        m_commands["endash"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_endash] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter((unsigned long)0x96);
         };
-        m_commands["emdash"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_emdash] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandCharacter((unsigned long)0x97);
         };
-        m_commands["b"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_b] = [this](IWriter & writer, RtfStyle & style, int value) {
             Style new_style = this->getStyle();
             if (value)
                 new_style.setBold(true);
@@ -138,7 +190,7 @@ namespace SDK_RTF2HTML {
                 new_style.setBold(false);
             this->setStyle(new_style);
         };
-        m_commands["i"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_i] = [this](IWriter & writer, RtfStyle & style, int value) {
             Style _style = this->getStyle();
             if (value)
                 _style.setItalic(true);
@@ -146,10 +198,10 @@ namespace SDK_RTF2HTML {
                 _style.setItalic(false);
             this->setStyle(_style);
         };
-        m_commands["u"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_u] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandUnicode(value);
         };
-        m_commands["ul"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
+        m_commands[cmd_name_ul] = [this](IWriter & writer, RtfStyle & _style, int value) {
             Style style = this->getStyle();
             if (value)
                 style.setUnderline(true);
@@ -157,17 +209,17 @@ namespace SDK_RTF2HTML {
                 style.setUnderline(false);
             this->setStyle(style);
         };
-        m_commands["ulnone"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
+        m_commands[cmd_name_ulnone] = [this](IWriter & writer, RtfStyle & _style, int value) {
             Style style = this->getStyle();
             style.setUnderline(false);
             this->setStyle(style);
         };
-        m_commands["plain"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
+        m_commands[cmd_name_plain] = [this](IWriter & writer, RtfStyle & _style, int value) {
             RtfStyle style = this->getRtfStyle();
             style.setPlain();
             this->setRtfStyle(style);
         };
-        m_commands["ql"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
+        m_commands[cmd_name_ql] = [this](IWriter & writer, RtfStyle & _style, int value) {
             Style style = this->getStyle();
             if (value)
             {
@@ -179,7 +231,7 @@ namespace SDK_RTF2HTML {
             }
             this->setStyle(style);
         };
-        m_commands["qr"] = [this](IWriter & writer, RtfStyle & _style, int value) {
+        m_commands[cmd_name_qr] = [this](IWriter & writer, RtfStyle & _style, int value) {
             Style style = this->getStyle();
             if (value)
                 style.setAlign(RightJustified);
@@ -187,7 +239,7 @@ namespace SDK_RTF2HTML {
                 style.setAlign(DefaultJustified);
             this->setStyle(style);
         };
-        m_commands["qc"] = [this](IWriter & writer, RtfStyle & _style, int value) {
+        m_commands[cmd_name_qc] = [this](IWriter & writer, RtfStyle & _style, int value) {
             Style style = this->getStyle();
             if (value)
                 style.setAlign(CentreJustified);
@@ -195,21 +247,21 @@ namespace SDK_RTF2HTML {
                 style.setAlign(DefaultJustified);
             this->setStyle(style);
         };
-        m_commands["intbl"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_intbl] = [this](IWriter & writer, RtfStyle & style, int value) {
             RtfStyle rtfStyle = this->getRtfStyle();
             rtfStyle.setInTable(value);
             this->setRtfStyle(rtfStyle);
         };
-        m_commands["row"] = [this](IWriter & writer, RtfStyle & style, int value) { 
+        m_commands[cmd_name_row] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandEndRow();
         };
-        m_commands["cell"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_cell] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandEndCell();
         };
-        m_commands["pard"] = [this](IWriter & writer, RtfStyle & style, int value) {
+        m_commands[cmd_name_pard] = [this](IWriter & writer, RtfStyle & style, int value) {
             this->commandParagraphDefault();
         };
-        m_commands["cf"] = [this](IWriter & writer, RtfStyle & _style, int value) { 
+        m_commands[cmd_name_cf] = [this](IWriter & writer, RtfStyle & _style, int value) {
             RtfStyle style = this->getRtfStyle();
             style.setForegroundColour(value);
             this->setRtfStyle(style);

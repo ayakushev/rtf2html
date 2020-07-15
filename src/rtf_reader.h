@@ -1,17 +1,25 @@
 #ifndef __RTF_READER_H__
 #define __RTF_READER_H__
 
-#include "interfaces.h"
 #include "utils.h"
+#include "html_writer.h"
 #include <functional>
 #include <map>
 
-namespace SDK_RTF2HTML
+namespace RTF2HTML
 {
 class IWriter;
 class RtfStyle;
 
 typedef std::function<void(IWriter & writer, RtfStyle & style, int value)> WriterFunctor;
+
+class IReader {
+public:
+    virtual bool processData(void) = 0;
+    virtual ~IReader() {
+    };
+};
+
 
 class RtfReader : public IReader
 {

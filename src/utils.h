@@ -3,9 +3,8 @@
 
 #include <stack>
 #include <vector>
-#include "interfaces.h"
 
-namespace SDK_RTF2HTML {
+namespace RTF2HTML {
 
 
     class Colour {

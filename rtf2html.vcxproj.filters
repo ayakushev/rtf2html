@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="r1.cpp" />
     <ClCompile Include="src\html_writer.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\rtf_reader.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\interfaces.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\html_writer.h">
       <Filter>src</Filter>
     </ClInclude>
